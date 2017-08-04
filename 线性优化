@@ -1,0 +1,46 @@
+from scipy import stats    #http://www.vision.ime.usp.br/~igor/articles/optimization-linprog.html 化为标准形态变为负数神马的
+ #stock_returns= (0.065,0.0265,-0.0593,-0.001,-0.0346)
+ #'''mkt_returns=(0.055,-0.09,-0.041,0.045,0.022)'''
+ import matplotlib.pyplot as plt
+ import scipy as sp
+ import numpy as np
+ c=np.array([2,3,-5]);
+ a=np.array([[-2,-5,-1],[1,3,1]]);
+ b=np.array([-10,12]);
+ sp.optimize.linprog(-c,a,b,[[1,1,2]],[7],bounds=((0,7),(0,7),(0,7)));
+ 
+ # create the plot object
+fig, ax = plt.subplots(figsize=(8, 8))
+x = np.linspace(0, 100)
+ # add carpentry constraint: trains <= 80 - soldiers
+plt.plot(x, 80 - x, lw=3, label='carpentry')
+plt.fill_between(x, 0, 80 - x, alpha=0.1)
+
+# add finishing constraint: trains <= 100 - 2*soldiers
+plt.plot(x, 100 - 2 * x, lw=3, label='finishing')
+plt.fill_between(x, 0, 100 - 2 * x, alpha=0.1)
+
+# add demains constraint: soldiers <= 40
+plt.plot(40 * np.ones_like(x), x, lw=3, label='demand')
+plt.fill_betweenx(x, 0, 40, alpha=0.1)
+
+# add non-negativity constraints
+plt.plot(np.zeros_like(x), x, lw=3, label='t non-negative')
+plt.plot(x, np.zeros_like(x), lw=3, label='s non-negative')
+
+# highlight the feasible region
+path = Path([
+    (0., 0.),
+    (0., 80.),
+    (20., 60.),
+    (40., 20.),
+    (40., 0.),
+    (0., 0.),
+])
+patch = PathPatch(path, label='feasible region', alpha=0.5)
+ax.add_patch(patch)
+
+ #plt.plot(x,10-2*x)
+ #plt.plot(x,8-x,'ro')
+ #plt.plot(x,7)
+ #plt.legend
