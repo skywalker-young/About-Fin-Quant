@@ -1,0 +1,6 @@
+import matplotlib.pyplot as plt 
+
+import tushare as ts
+
+ a=ts.get_h_data('002673',autype='hfq' , start='2017-07-01',end='2017-08-08');
+ a["close"].plot(grid = True)
