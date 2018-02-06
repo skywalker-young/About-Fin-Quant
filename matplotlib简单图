@@ -1,0 +1,72 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy as sp
+from scipy import stats
+import seaborn as sns
+from matplotlib.ticker import  FuncFormatter
+dataframe_=pd.read_csv("C:/Users/User/Desktop/TC/300059eastmoney.csv")
+
+df=np.asarray(dataframe_)
+
+'''print(df[:, 4]) extract 4th column data'''
+
+closeprice=df[:,4]
+
+closeprice=closeprice.astype('int32')
+''' print(meanprice,sdprice)'''
+'''print(len(closeprice)) 244'''
+xy=[0 for x in range(0,len(closeprice))]
+'''print(len(xy)) 244'''
+
+'''
+plt.plot(closeprice-meanprice)
+plt.show()
+'''
+
+logprice=np.log(closeprice)
+
+meanprice=np.mean(logprice)
+sdprice=np.std(logprice)
+
+#自己画正态分布
+xlabel=np.linspace(meanprice-3*sdprice,meanprice+3*sdprice,244)
+ylabel=sp.exp(-(xlabel-meanprice)**2/(2*sdprice**2))/(sp.sqrt(2*sp.pi)*sdprice)
+
+x=np.random.normal(0,1,10000)
+
+sns.distplot(x,bins=50, kde=1)
+
+
+
+plt.legend()
+plt.show()
+'''
+#一张图上画第二个x轴
+yaxis=sns.distplot(logprice, kde=False, label='fit-normal')
+second_ax=yaxis.twinx()
+sns.distplot(logprice,ax=second_ax,kde=True,hist=False)
+second_ax.set_yticks([])
+
+formatter=FuncFormatter(to_percent)
+plt.gca().yaxis.set_major_formatter(formatter)
+ 
+ 
+sns.distplot(logprice, label='fit-normal distribution', hist=1)
+n,bbins,patches=plt.hist(logprice, normed=1,alpha=0.5)
+plt.ylabel('appear frequency')
+plt.xlabel('logprice')
+plt.show()
+
+plt.hist(logprice, normed=1,alpha=0.8)
+y=norm.pdf(bbins,meanprice,sdprice)
+plt.plot(bbins,y,'r-')
+'
+n,bbins,patches=plt.hist(logprice, normed=1,alpha=0.5)
+y=norm.pdf(bbins,meanprice,sdprice)
+
+plt.plot(bbins,y,'r--')
+
+print(y)
+print(bbins)
+'''
