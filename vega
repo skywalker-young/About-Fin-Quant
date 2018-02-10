@@ -1,0 +1,59 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib import rc
+
+from scipy.stats import norm
+'''
+T=1
+J=1000
+dt=T/J
+Smin=0
+Smax=200
+ds=Smax/1600
+
+'''
+
+def option_call(S, T, r, K, sigma):  # the B-S formula of the call option
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    call = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return call
+
+def option_vega(S, T, r, K, sigma):  # the vega formula (dv/dsigma)
+    d1 = (np.log(S/ K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    vega = S * np.sqrt(T) * norm.pdf(d1)
+    return vega
+
+Call=16
+K=20
+S=np.linspace(1,49,1000)
+r=0.05
+xlabel=K/S
+T=1
+dt=T/365
+volatility=0.2
+
+strike=np.linspace(1,200,200)
+priceforcall=option_call(50,dt*30,r,strike,volatility)
+
+
+def newtonmethod(S, T , r , K):
+    sigma_initial = 0.28
+    sigma_pre = sigma_initial
+    sigma = sigma_pre - (priceforcall - option_call(S, T, r, K, sigma_pre)) / (-option_vega(S, T, r , K, sigma_pre))
+    while (np.abs(sigma - sigma_pre)>0.0001).all():
+            sigma_pre = sigma
+            sigma = sigma_pre - (priceforcall - option_call(S, T, r, K, sigma_pre)) / (-option_vega(S, T, r, K, sigma_pre))
+    return sigma
+
+iv=newtonmethod(50,dt*30,r,strike)
+
+
+
+valueforvega=option_vega(S,dt*30,r,K,volatility)
+
+
+plt.plot(strike,iv)
+plt.show()
