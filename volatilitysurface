@@ -1,0 +1,80 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib import rc
+import math
+
+
+from scipy.stats import norm
+
+def call_value(s0,k,T,r,sigma):
+    d1=(np.log(s0/k)+(r+0.5*sigma**2)*T)/(sigma*np.sqrt(T))
+    d2=d1-sigma*np.sqrt(T)
+    value=s0*norm.cdf(d1)-k*np.exp(-r*T)*norm.cdf(d2)
+
+    return  value
+
+def vega(s0,k,T,r,sigma):
+    d1=(np.log(s0/k)+(r+0.5*sigma**2)*T)/(sigma*np.sqrt(T))
+    v=s0*np.sqrt(T)*norm.pdf(d1)
+    return v
+
+'''
+
+def newtonmethod(s0,k,T,r,c0,sigma_initial=0.27):
+
+    sigma_pre=0.27
+    sigma_next=sigma_initial-(call_value(s0,k,T,r,sigma_initial)-c0)/vega(s0,k,T,r,sigma_initial)
+    while ((sigma_next-sigma_pre)>0.0001).all():
+        sigma_pre=sigma_next
+        sigma_next=sigma_pre-(call_value(s0,k,T,r,sigma_pre)-c0)/vega(s0,k,T,r,sigma_pre)
+    return sigma_pre
+
+
+'''
+
+
+def NewtonMethod(close, TimetoMat, rfrate, strike, optionprice):
+    # sigma_initial=np.sqrt(2*math.pi/TimetoMat)*optionprice/close
+    sigma_initial = 0.25
+    #print(sigma_initial)
+    sigma_pre = sigma_initial
+
+    sigma = sigma_pre - (optionprice - call_value(close,strike,TimetoMat,rfrate,sigma_pre))/(-vega(close,strike,TimetoMat,rfrate,sigma_pre))
+
+    while (np.abs(sigma - sigma_pre) > 0.0001).all():
+            sigma_pre = sigma
+            sigma = sigma_pre - (optionprice - call_value(close, strike, TimetoMat, rfrate, sigma_pre)) / (
+            -vega(close, strike, TimetoMat, rfrate, sigma_pre))
+
+    return sigma
+
+
+S0=50
+xlabel=np.linspace(1,100,100)
+strike=np.linspace(1,100,100)
+T=1
+dt=T/365
+timeinterval=np.linspace(0,T,100*dt)
+price1=call_value(xlabel,50,dt*30,0.05,0.27)
+price2=call_value(50,strike,dt*30,0.05,0.27)
+vv=vega(xlabel,50,dt*30,0.05,0.27)
+
+pricepp=call_value(2.689,2.7,dt*30,0.034,0.147)
+
+S, ttm, rf, K, v  = 2.689, dt*30, 0.034, np.linspace(0.1,3,100), call_value(2.689,np.linspace(0.1,3,100),dt*30,0.034,0.147)
+iv = NewtonMethod(S, ttm, rf, K, v )
+
+kfor3d=np.linspace(50,150,24)
+ttm=np.linspace(0.5,2.5,24)
+kfor3d,ttm=np.meshgrid(kfor3d,ttm)
+
+ivv=(kfor3d-100)**2/(100*kfor3d)/ttm
+
+fig=plt.figure(figsize=(9,6))
+ax=fig.gca(projection='3d')
+surf=ax.plot_surface(kfor3d,ttm,ivv)
+plt.show()
+
+
+
