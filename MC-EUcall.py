@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 """
 European call option by Monte Carlo simulation 
 test for vectorized calculation
