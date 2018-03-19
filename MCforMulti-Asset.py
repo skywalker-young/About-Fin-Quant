@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
+
 """
-ELS 2-asset by Monte Carlo simulation
+2-asset by Monte Carlo simulation
 test for vectorized calculation
-@author: Minhyun Yoo
+
 """
 import time
 import numpy as np
