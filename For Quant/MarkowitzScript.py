@@ -131,4 +131,4 @@ if plot_flag == 1:
 	plt.ylabel('Returns')
 	plt.title('Returns vs. Time')
 
-	plt.show()
+	plt.show() 
