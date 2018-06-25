@@ -1,0 +1,15 @@
+from math import *
+from scipy.stats import  norm
+from scipy.optimize import fmin_bfgs
+
+def price(S,K,T,r,v,callPutFlag='c'):
+    d1=(log(S/K)+(r+0.5*v**2)*T)/(v*sqrt(T))
+    d2=d1-v*sqrt(T)
+    if (callPutFlag=='c'):
+        return S*norm.cdf(d1)-K*exp(-r*T)*norm.cdf(d2)
+    else:
+        return K*exp(-r*T)*norm.cdf(-d2)-S*norm.cdf(-d1)
+
+def implied_volatility(price_,S,K,T,r,callPutFlag='c'):
+    Objective=lambda x:(price_-price(S,K,T,r,x,callPutFlag))**2
+    return fmin_bfgs(Objective,1,disp=False)[0]
