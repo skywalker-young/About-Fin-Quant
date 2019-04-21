@@ -1,0 +1,151 @@
+# -*- coding:utf-8 -*-
+
+import pymssql
+from ConfigHelper import configHelper
+import pandas as pd
+
+class SqlServerHelper:
+    def __init__(self):
+        # self.host = configHelper.getValue('sqlserver','host')
+        # self.user = configHelper.getValue('sqlserver','username')
+        # self.pwd = configHelper.getValue('sqlserver','password')
+        # self.db = configHelper.getValue('sqlserver','database')
+        self.host = '192.168.2.195'
+        self.user = 'mdz'
+        self.pwd = '123456'
+        self.db = 'dev'
+
+
+    # 用“__”声明为类的私有成员
+    def __GetConnect(self):
+        """
+        得到连接信息
+        返回: conn.cursor()
+        """
+        # if not self.db:
+        #     raise(NameError,"没有设置数据库信息")
+        self.conn = pymssql.connect(host=self.host,user=self.user,password=self.pwd,database=self.db,charset="utf8")
+        cur = self.conn.cursor()
+        return cur
+        # if not cur:
+        #     raise(NameError,"连接数据库失败")
+        # else:
+           
+
+    def ExecQuery(self,sql):
+        """
+        执行查询语句
+        返回的是一个包含tuple的list，list的元素是记录行，tuple的元素是每行记录的字段
+
+        """
+        cur = self.__GetConnect()
+        try:
+            cur.execute(sql)
+            #resList = cur.fetchall()
+            col_names=[]
+            result={}
+            column_count=len(cur.description)
+            for i in range(column_count):
+                desc=cur.description[i]
+                col_names.append(desc[0])
+            data=cur.fetchall()
+            #resList=pd.DataFrame([daily for daily in cur])
+            result['head']=col_names
+            result['data']=data
+        finally:
+            #查询完毕后必须关闭连接
+            self.conn.close()
+
+        return result
+
+    def ExecNonQuery(self,sql):
+        """
+        执行非查询语句
+
+        调用示例：
+            cur = self.__GetConnect()
+            cur.execute(sql)
+            self.conn.commit()
+            self.conn.close()
+        """
+        cur = self.__GetConnect()
+        try:
+            cur.execute(sql)
+            self.conn.commit()
+        finally:
+            self.conn.close()
+
+    def InsertDictListToSqlServer(self,tableName,dataFrameList):
+
+        '''
+        直接将list列表批量插入sqlserver
+        dictList数据类型为[{"name":'a',"age":1},{"name":'b',"age":2},{"name":'c',"age":3},{"name":'d',"age":4}]
+        注意，此处务必dictList的每个item的结构
+        ERROR: 最多同时插入1000行数据。
+        MODIFY: 修改为每800插入一次数据库
+        '''
+
+        tupleList = []
+        for row in dataFrameList.itertuples():
+            tupleList.append(str(tuple(row[1:len(row)])))
+            strTupleList = ','.join(tupleList)
+
+            if ((row[0] + 1) % 800 == 0 or row[0] == len(dataFrameList) - 1):
+                sqlstr = 'INSERT INTO %s VALUES %s' %(tableName,strTupleList)
+                sqlstr = sqlstr.replace('None','null')
+
+                try:
+                    self.ExecNonQuery(sqlstr)
+                except Exception as e:
+                    print(sqlstr)
+
+                # 使用完清空
+                tupleList = []
+                strTupleList = ''
+
+
+        print(strTupleList)
+        exit()
+
+    # 判断表示否存在
+    def getTableIsExists(self, tableName):
+        # sqlstr = 'IF EXISTS (SELECT * FROM dbo.sysobjects WHERE name = %s) PRINT 1 ELSE PRINT 0' % (tableName)
+        sqlstr = "SELECT * FROM dbo.sysobjects WHERE name = '%s'" % (tableName)
+        try:
+            result = self.ExecQuery(sqlstr)
+        except Exception as e:
+            print(sqlstr)
+
+        if len(result):
+            return True
+        else:
+            return False
+
+    # 根据表明创建分钟线表
+    def createStockMinutesTableByTableName(self, tableName):
+        sqlstr = "CREATE TABLE [dbo].[%s]("
+        sqlstr += "[trade_time] datetime NOT NULL,"
+        sqlstr += "[ts_code] varchar(20) NOT NULL,"
+        sqlstr += "[open] varchar(20) NOT NULL,"
+        sqlstr += "[high] varchar(20) NOT NULL,"
+        sqlstr += "[low] varchar(20) NOT NULL,"
+        sqlstr += "[close] varchar(20) NOT NULL,"
+        sqlstr += "[vol] varchar(20) NOT NULL,"
+        sqlstr += "[amount] varchar(20) NOT NULL)"
+        sqlstr = sqlstr % (tableName)
+
+
+        try:
+            self.ExecNonQuery(sqlstr)
+        except Exception as e:
+            print(sqlstr)
+
+        exit()
+
+'''
+a=SqlServerHelper()
+b=a.ExecQuery('SELECT * FROM dbo.opt_fund_daily_shibor')
+
+
+print(pd.DataFrame(b.get('data'),columns=b.get('head')))
+'''
