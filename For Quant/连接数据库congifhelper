@@ -1,0 +1,43 @@
+# -*- coding:utf-8 -*-
+
+from configparser import ConfigParser
+import os
+
+class configHelper():
+
+    @staticmethod
+    def getValue(section, key):
+        cp = ConfigParser()
+        # 可读取ini/cfg/conf等keyvalue类型的文件
+        path = os.path.split(os.path.realpath(__file__))[0] + '/config.ini'
+        cp.read(path,encoding='UTF-8')
+
+        return cp.get(section, key)
+    
+    @staticmethod
+    def getIntValue(section, key):
+        cp = ConfigParser()
+        # 可读取ini/cfg/conf等keyvalue类型的文件
+        path = os.path.split(os.path.realpath(__file__))[0] + '/config.ini'
+        cp.read(path,encoding='UTF-8')
+
+        return cp.getint(section, key)
+    
+
+# var1 = cp.sections()
+# print(var1)
+# #得到所有的section，以列表的形式返回
+# section = cp.sections()[0]
+# print(section)
+
+# #得到该section的所有option
+# print(cp.options(section))
+
+# #得到该section的所有键值对
+# print(cp.items(section))
+
+# #得到该section中的option的值，返回为string类型
+# print(cp.get(section, "host"))
+
+# #得到该section中的option的值，返回为int类型
+# print(cp.getint(section, "port"))
