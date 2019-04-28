@@ -173,6 +173,26 @@ data=data.reset_index(drop=True)
 data['trade_date']=pd.to_datetime(data['trade_date'],format='%Y-%m-%d')
 
 
+#def calculate(data):
+#    test=[]
+#    tmp=pd.Series()
+#    loop1=list(set(data['trade_date']))
+#    loop2=list(set(data['maturity_date']))
+#    loop1=sorted(loop1)
+#    loop2=sorted(loop2)
+#    for i in loop1:
+#        for j in loop2:
+#            #test.append(data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'].sum())
+#            test.append((data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'])/(data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'].sum()))
+#    for i in range(len(test)):
+#        tmp=tmp.append(test[i])
+#    data['ratio']=tmp
+#    return data
+    
+    
+    
+    
+    
 def calculate(data):
     test=[]
     tmp=pd.Series()
@@ -181,9 +201,9 @@ def calculate(data):
     loop1=sorted(loop1)
     loop2=sorted(loop2)
     for i in loop1:
-        for j in loop2:
-            #test.append(data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'].sum())
-            test.append((data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'])/(data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'].sum()))
+        
+            test.append((data.loc[(data['trade_date'] == i) ]['vol']) / (data.loc[(data['trade_date'] == i) ]['vol'].sum()))
+            #test.append((data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'])/(data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'].sum()))
     for i in range(len(test)):
         tmp=tmp.append(test[i])
     data['ratio']=tmp
