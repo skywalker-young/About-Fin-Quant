@@ -258,3 +258,23 @@ def finstep(data):
     return pd.DataFrame(tmp)
     #return answer
 print(finstep(out))
+
+
+def finstep(data):
+    tmp={'trade_date':[],'cvix':[]}
+    cc=[]
+    loop1=list(set(data['trade_date']))
+    loop2=list(set(data['maturity_date']))
+    loop1=sorted(loop1)
+    loop2=sorted(loop2)
+    for i in loop1:
+                t=data.loc[(data['trade_date']==i)].count()
+                num=t['IV']
+
+                tmp.get('trade_date').append(i)
+                for n in range(0,num,2):
+                    answer=(-data.ix[n]['IV']+data.ix[n+1]['IV'])*(data.ix[n]['ratio']+data.ix[n+1]['ratio'])
+                    cc.append(answer)
+                tmp.get('cvix').append(sum(cc))
+                
+    return pd.DataFrame(tmp)
