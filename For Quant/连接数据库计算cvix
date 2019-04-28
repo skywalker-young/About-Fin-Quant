@@ -1,0 +1,260 @@
+import SqlServerHelper as sql
+import numpy as np
+import pandas as pd
+from math import log, exp, sqrt
+from scipy.stats import norm
+from math import floor
+
+from datetime import datetime
+pd.set_option('display.width',None)
+a=sql.SqlServerHelper()
+'''
+basicfields='ts_code,call_put,exercise_price,maturity_date,name'
+#OptInfo=a.ExecQuery('SELECT ts_code,call_put,exercise_price,maturity_date,name FROM dbo.opt_basic')
+sql="SELECT {} FROM dbo.opt_basic ".format(basicfields)  #这里加上order by也会在之后的一一对应中混论
+OptInfo=a.ExecQuery(sql)
+OptInfo=pd.DataFrame(OptInfo.get('data'),columns=OptInfo.get('head'))
+OptInfo=OptInfo.sort_values(by='ts_code',ascending=True)
+
+#OptInfo['maturity_date']=pd.to_datetime(OptInfo['maturity_date'],format='%Y-%m-%d')
+
+#################################
+#############################
+###########################
+
+
+basicfields2='trade_date,ts_code,settle'
+sql2="SELECT {} FROM dbo.opt_daily where trade_date>='20190422' order by trade_date ASC".format(basicfields2)
+OptData=a.ExecQuery(sql2)
+OptData=pd.DataFrame(OptData.get('data'),columns=OptData.get('head'))
+
+data=pd.merge(OptData,OptInfo,how='left')
+
+calls=data[data['call_put']=='C']
+puts=data[data['call_put']=='P']
+
+puts=puts.rename(columns={'settle':'Put','call_put':'Type'})
+calls=calls.rename(columns={'settle':'Call','call_put':'Type'})
+
+options = pd.merge(calls, puts.loc[:, ['trade_date', 'maturity_date', 'exercise_price', 'Put']],\
+                   on=['trade_date', 'maturity_date','exercise_price'], how='left').drop_duplicates()
+
+options = options.loc[:, ['trade_date', 'maturity_date', 'exercise_price', 'Call', 'Put']]
+
+options['trade_date']=pd.to_datetime(options['trade_date'],format='%Y-%m-%d')
+options['maturity_date']=pd.to_datetime(options['maturity_date'],format='%Y-%m-%d')
+
+options['T_days'] = (options['maturity_date'] - options['trade_date']).apply(lambda x: x.days)
+
+############################
+##############################
+###############
+#basicfields3='trade_date,close,3m'
+#sql3="SELECT {} FROM dbo.opt_fund_daily_shibor".format(basicfields3)
+sql3="SELECT trade_date,pre_close,[3m] FROM dbo.opt_fund_daily_shibor where trade_date>='20190422' "
+ETF_50=a.ExecQuery(sql3)
+ETF_50=pd.DataFrame(ETF_50.get('data'),columns=ETF_50.get('head'))
+
+ETF_50['trade_date']=pd.to_datetime(ETF_50['trade_date'],format='%Y-%m-%d')
+ETF_50['pre_close']=ETF_50['pre_close'].astype(float)
+ETF_50['3m']=ETF_50['3m'].astype(float)
+#print(ETF_50.head())
+#print(ETF_50.dtypes)
+
+options = pd.merge(options, ETF_50, on=['trade_date'], how='left')
+options=options.drop_duplicates(keep='first',inplace=False)
+options=options.sort_values(by=['trade_date','maturity_date','exercise_price'],ascending=[True,True,True])
+options=options.reset_index(drop=True)
+
+
+###############################
+
+
+
+def option_call(S, T, r, K, sigma,types):  # the B-S formula of the call option
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    if types=='Call':
+       view=K * exp(-r * T)
+       call = S * norm.cdf(d1) - view * norm.cdf(d2)
+       return call
+    else:
+        put = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+        return put
+
+#priceforcall=option_call(50,dt*30,r,strike,volatility)
+def bisection(S,T,r,K,MP,types):
+    x0=1
+    xx=0.001
+    tolerance=0.0001
+    eplsion=10**(-5)
+    maxIterations=100
+    SoultionFound=False
+    f=lambda s:option_call(S,T,r,K,s,types)-MP
+    for i in range (1,maxIterations+1):
+        y=f(x0)
+        yprime=(f(x0+xx)-f(x0-xx))/(2*x0*xx)
+        if (abs(yprime)<eplsion):
+            break
+        x1=x0-y/yprime
+        if (abs(x1-x0)<=tolerance*abs(x1)):
+            SoultionFound=True
+            break
+        x0=x1
+    if (SoultionFound):
+        return x1
+    else:
+        print('did not converge')
+def get_iv_call(data):
+    S=data['pre_close']
+    T=data['T_days']/365
+    r=data['3m']/100
+    K=data['exercise_price']
+    priceforcall=data['Call']
+    iv=bisection(S,T,r,K,priceforcall,types='Call')
+    #iv=option_call(S,T,r,K,sigma=0.3)
+    return iv
+
+def get_iv_put(data):
+    S=data['pre_close']
+    T=data['T_days']/365
+    r=data['3m']/100
+    K=data['exercise_price']
+    priceforcall=data['Put']
+    iv=bisection(S,T,r,K,priceforcall,types='Put')
+    return iv
+
+
+print(len(options))
+call_iv=[]
+put_iv=[]
+for i in range (len(options)):
+    call_iv.append(get_iv_call(options.loc[i,:]))
+    put_iv.append(get_iv_put(options.loc[i,:]))
+options['Call_IV']=call_iv
+options['Put_IV']=put_iv
+options.to_excel('testSql.xlsx')
+print(options.tail())
+
+##################################
+######################
+#############################
+
+basicfields3='ts_code,exercise_price,call_put,maturity_date'
+sql3="SELECT {} FROM dbo.opt_basic ".format(basicfields3)
+OptInfo2=a.ExecQuery(sql3)
+basicfields4='ts_code,trade_date,vol'
+sql4="SELECT {} FROM dbo.opt_daily WHERE trade_date>='20190422'".format(basicfields4)
+OptData2=a.ExecQuery(sql4)
+OptData2=pd.DataFrame(OptData2.get('data'),columns=OptData2.get('head'))
+
+OptInfo2=pd.DataFrame(OptInfo2.get('data'),columns=OptInfo2.get('head'))
+OptInfo2['maturity_date']=pd.to_datetime(OptInfo2['maturity_date'],format='%Y-%m-%d')
+t1=sorted(set(OptInfo2['maturity_date']))
+
+deleteDup=pd.DataFrame()
+for i in t1:
+
+    tmp=OptInfo2.loc[(OptInfo2['maturity_date']==i)&(OptInfo2['call_put']=='P')]
+    tmp=tmp.drop_duplicates(subset=['exercise_price'],keep='first',inplace=False)
+    tmp2=OptInfo2.loc[(OptInfo2['maturity_date']==i)&(OptInfo2['call_put']=='C')]
+    tmp2 = tmp2.drop_duplicates(subset=['exercise_price'], keep='first', inplace=False)
+    tmp3=pd.concat([tmp,tmp2])
+    deleteDup=pd.concat([deleteDup,tmp3])
+
+OptInfo2=deleteDup
+data=pd.merge(OptInfo2,OptData2,on=['ts_code'],how='left')
+
+data=(data.dropna(axis=0))
+data=data[['ts_code','trade_date','maturity_date','exercise_price','call_put','vol']]
+data=data.sort_values(by=['trade_date','maturity_date','exercise_price'],ascending=[True,True,True])####这里顺序对齐对后面计算很重要
+data=data.reset_index(drop=True)
+#data['maturity_date']=pd.to_datetime(data['maturity_date'],format='%Y-%m-%d')
+data['trade_date']=pd.to_datetime(data['trade_date'],format='%Y-%m-%d')
+
+
+def calculate(data):
+    test=[]
+    tmp=pd.Series()
+    loop1=list(set(data['trade_date']))
+    loop2=list(set(data['maturity_date']))
+    loop1=sorted(loop1)
+    loop2=sorted(loop2)
+    for i in loop1:
+        for j in loop2:
+            #test.append(data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'].sum())
+            test.append((data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'])/(data.loc[(data['trade_date']==i)&(data['maturity_date']==j)]['vol'].sum()))
+    for i in range(len(test)):
+        tmp=tmp.append(test[i])
+    data['ratio']=tmp
+    return data
+out=calculate(data)
+print(out.head())
+out.to_excel('testSql2.xlsx')
+
+'''
+ooo=pd.read_excel('testSql.xlsx')
+out=pd.read_excel('testSql2.xlsx')
+
+ooo=(ooo.fillna(0))
+
+
+loop1 = list(set(ooo['trade_date']))
+loop2 = list(set(ooo['maturity_date']))
+loop1 = sorted(loop1)
+loop2 = sorted(loop2)
+#loop3=list(set(ooo['exercise_price']))
+#oop3=sorted(loop3)
+loop3=out['exercise_price']
+
+ss = []
+
+for i in range(len(out)):#22
+        j=floor(i/2)
+        if out.ix[i]['call_put']=='P':
+           ss.append(ooo.ix[j]['Put_IV'])
+        else:
+            ss.append(ooo.ix[j]['Call_IV'])
+
+
+
+out['IV']=ss
+print( out)
+
+# def finstep(data):
+#     tmp={'trade_date':[],'maturity_date':[],'cvix':[]}
+#     loop1=list(set(data['trade_date']))
+#     loop2=list(set(data['maturity_date']))
+#     loop1=sorted(loop1)
+#     loop2=sorted(loop2)
+#     for i in loop1:
+#         for j in loop2:
+#             t=data.loc[(data['trade_date']==i)&(data['maturity_date']==j)].count()
+#             num=t['IV']
+#             tmp.get('maturity_date').append(j)
+#             tmp.get('trade_date').append(i)
+#             for n in range(0,num,2):
+#                 answer=(-data.ix[n]['IV']+data.ix[n+1]['IV'])*(data.ix[n]['ratio']+data.ix[n+1]['ratio'])
+#             tmp.get('cvix').append(answer)
+
+
+def finstep(data):
+    tmp={'trade_date':[],'maturity_date':[],'cvix':[]}
+    loop1=list(set(data['trade_date']))
+    loop2=list(set(data['maturity_date']))
+    loop1=sorted(loop1)
+    loop2=sorted(loop2)
+    for i in loop1:
+        for j in range(4):
+                t=data.loc[(data['trade_date']==i)&(data['maturity_date']==loop2[j])].count()
+                num=t['IV']
+                tmp.get('maturity_date').append(loop2[j])
+                tmp.get('trade_date').append(i)
+                for n in range(0,num,2):
+                    answer=(-data.ix[n]['IV']+data.ix[n+1]['IV'])*(data.ix[n]['ratio']+data.ix[n+1]['ratio'])
+                tmp.get('cvix').append(answer)
+    if i == loop2[j]:
+            loop2.remove(loop2[0])
+    return pd.DataFrame(tmp)
+    #return answer
+print(finstep(out))
