@@ -1,0 +1,33 @@
+
+def cal(S,K,T,steps,r,sigma):
+    #construct
+    tmp=np.zeros((steps,steps))
+    tmp[0,0]=S
+    dt=T/steps
+    A = 0.5 * (math.exp(-r * dt) + math.exp((r + sigma * sigma) * dt))
+    q=0.6523
+    u=A+np.sqrt(A*A+1)
+    d=1/u
+    u=1.1
+    d=0.9
+    for j in range(1,steps):
+        for i in range(j+1):
+            tmp[i,j]=S*pow(u,j-i)*pow(d,i)
+    payoff=np.maximum(tmp-K,0)
+    df = math.exp(-r * dt)  # discount per interval
+    V=np.zeros((steps,steps))
+    for j in range(steps-1,0,-1):
+        for i in range(j):
+            print('j=',j)
+            print('i=',i)
+            V[i,j-1]=(q*payoff[i,j]+(1-q)*payoff[i+1,j])*df
+
+    return V
+
+S=20
+K=20
+r=0.12
+sigma=0.5
+steps=3
+T=0.25
+print(cal(S,K,T,steps,r,sigma))
