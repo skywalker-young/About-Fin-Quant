@@ -1,0 +1,66 @@
+import pandas as pd
+import os
+
+
+raw_data_folder = 'E:/stk_data/Stk_Tick10_201901'
+
+sh_save_path_header = 'E:/cleaned_data/sh201901/'
+sz_save_path_header = 'E:/cleaned_data/sz201901/'
+
+open_path_header = raw_data_folder + '/'
+tails = os.listdir(raw_data_folder)
+tails = [tail for tail in tails if len(tail) >= 10]
+for tail in tails:
+    portion = os.path.splitext(tail)
+    if portion[1] != ".csv":  
+        newname = portion[0] + ".csv"  
+        os.chdir(raw_data_folder)
+        os.rename(tail,newname)
+tails = os.listdir(raw_data_folder)
+tails = [tail for tail in tails if len(tail) >= 10]
+        
+
+for tail in tails:
+    print(tail)
+    open_path = open_path_header + tail
+    df = pd.read_csv(open_path, encoding = 'gbk')
+    print("Read successfully")
+    
+    if tail[:2] == 'sh':
+        
+        df = df[(df['代码'] > 600000) & (df['代码'] < 700000)]
+        df = df.sort_values(by = ['代码', '时间'], ascending = True)
+        df.index = range(len(df))
+        cutpositiondf = df.drop_duplicates(subset=['代码'], keep='last', inplace=False)
+        cutposition = cutpositiondf.index.tolist()
+        print("Adjustment finished")
+    
+        for i in range(len(cutposition)):
+            if i == 0:
+                temp_df = df[0:cutposition[i]+1]
+            else:
+                temp_df = df[cutposition[i-1]+1:cutposition[i]+1]
+            
+            stock_code = temp_df['代码'].iloc[0]
+            print(stock_code)
+            save_path = sh_save_path_header + str(stock_code) + tail
+            temp_df.to_csv(save_path)
+            
+    else:
+        df = df[(df['代码'] < 100000) | ((df['代码'] >= 300000) & (df['代码'] < 301000))]
+        df = df.sort_values(by = ['代码', '时间'], ascending = True)
+        df.index = range(len(df))
+        cutpositiondf = df.drop_duplicates(subset=['代码'], keep='last', inplace=False)
+        cutposition = cutpositiondf.index.tolist()
+        print("Adjustment finished")
+        
+        for i in range(len(cutposition)):
+            if i == 0:
+                temp_df = df[0:cutposition[i]+1]
+            else:
+                temp_df = df[cutposition[i-1]+1:cutposition[i]+1]
+            
+            stock_code = temp_df['代码'].iloc[0]
+            print(stock_code)
+            save_path = sz_save_path_header + str(stock_code) + tail
+            temp_df.to_csv(save_path)
