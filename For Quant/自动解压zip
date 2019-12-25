@@ -1,0 +1,24 @@
+import zipfile
+import os
+
+'''
+os.walk返回一个三元组（root,dirs,files)
+root:文件地址； dirs:子文件夹名字; files:文件夹里的文件
+'''
+# for root,dirs,files in os.walk(parent_path):
+#     for i in files:
+#         #print(i)
+#         rar_path=os.path.join(root,i)
+#         print(rar_path)
+#         # ext=os.path.splitext(rar_path)[1]
+#         # print(ext)
+#         z=rarfile.RarFile(f'{rar_path}','r')
+#         print(z)
+#         z.extractall(path=f"{RRR}")
+
+
+
+a1="D:\Todo\sh20190701.zip"
+a2=r'D:\Extracted'
+z=zipfile.ZipFile(a1,'r')
+z.extractall(a2)
