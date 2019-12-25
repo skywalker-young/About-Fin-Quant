@@ -22,3 +22,24 @@ a1="D:\Todo\sh20190701.zip"
 a2=r'D:\Extracted'
 z=zipfile.ZipFile(a1,'r')
 z.extractall(a2)
+
+# path=r"C:\ToPractice\test.txt"
+# f=open(path)
+# line=f.readline()
+# print(line)
+# l2=f.readline()
+# print(l2)
+
+
+#path_=r"C:\Users\User\Desktop\psd\ToPractice\sh20190701.bs"
+
+f=open('test.txt')
+#f=open('sh20190701.bs','rb')
+while 1:
+    lines=f.readlines(10)
+    if not lines:
+        break
+    for line in lines:
+        a=(line.strip() )
+
+        print(a[22:28] )
