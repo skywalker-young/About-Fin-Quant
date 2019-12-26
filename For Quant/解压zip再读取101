@@ -30,16 +30,72 @@ z.extractall(a2)
 # l2=f.readline()
 # print(l2)
 
+import os
+import pandas as pd
+import rarfile
+import zipfile
+parent_path=r"D:\Extracted\sh20190701.bs"
+raw_data_folder="D:/Extracted"
+save_path_header = 'D:/Extracted/forsave'
+for root,dirs,files in os.walk(parent_path):
+     for i in files:
+         rar_path = os.path.join(root, i)
+         #print(rar_path)
 
-#path_=r"C:\Users\User\Desktop\psd\ToPractice\sh20190701.bs"
 
-f=open('test.txt')
-#f=open('sh20190701.bs','rb')
+f=open(parent_path, 'rb')
+'''
 while 1:
     lines=f.readlines(10)
     if not lines:
         break
     for line in lines:
-        a=(line.strip() )
 
-        print(a[22:28] )
+        print(line)
+'''
+store_name=[]
+count=0
+try:
+    for line in f:
+        line=str(line,encoding="gbk")
+        line=(line.strip('\n'))
+        tmp=line[20:26]#判断是否是数字
+        if tmp.isdigit() and len(tmp)!=0:
+            if 500000<=int(tmp)<600000:
+                store_name.append(tmp)
+        count=count+1
+        if count>500:
+            break
+finally:
+    f.close()
+
+print((store_name))
+print(len(store_name))
+store_name=list(set(store_name))
+print(len(store_name))
+
+#创建文件
+for i in store_name:
+    full_path=raw_data_folder+'/'+i+'.txt'
+    file=open(full_path,'w')
+    file.write('1')
+open_path_header = raw_data_folder + '/'
+tails = os.listdir(raw_data_folder)#找出目录下的所有文件
+tails = [tail for tail in tails if len(tail) == 10]#以长度来过滤非目标文件
+
+#print(tails)
+f=open(parent_path, 'rb')
+
+for line in f:
+    line=str(line,encoding='gbk')
+    #line=line.strip('\n')
+    tmp = line[20:26]
+    #print(tmp)
+    if tmp.isdigit() and len(tmp)!=0:
+        if 500000<int(tmp)<600000:
+            tmp=line[20:26]+'.txt'
+            full_path=raw_data_folder+ '/' +tmp
+            file=open(full_path,'a')
+            file.write(line)
+
+print('finished')
