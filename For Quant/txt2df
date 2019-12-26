@@ -1,1 +1,22 @@
 https://www.php.cn/python-tutorials-392246.html
+
+import pandas as pd
+import numpy as np
+import os
+
+#510150 消费etf
+#510170 商品etf
+#510590 平安500
+#512390  MSCI低波
+parent_path='D:/Extracted'
+
+full_path=parent_path+'/'+'512390'+'.txt'
+dict_data={}
+
+with open(full_path,'r') as df:
+    for line in df:
+        if line.count('\n')==len(line): #空行
+            continue
+        for kv in [line.strip().split(':')]: #对每行清除前后空格
+            
+            
