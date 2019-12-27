@@ -1,5 +1,4 @@
 https://www.php.cn/python-tutorials-392246.html
-
 import pandas as pd
 import numpy as np
 import os
@@ -11,12 +10,39 @@ import os
 parent_path='D:/Extracted'
 
 full_path=parent_path+'/'+'512390'+'.txt'
-dict_data={}
+dict_data={'datetime':[],'ETF_id':[],'closeprice':[],'volume':[],'totalcap':[],'buyprice1':[],\
+           'buyvolume1':[],'iopv':[]}
 
 with open(full_path,'r') as df:
     for line in df:
         if line.count('\n')==len(line): #空行
             continue
-        for kv in [line.strip().split(':')]: #对每行清除前后空格
-            
-            
+        # datetime=[i[0:20].strip('\n').strip(',')  for i in df.readlines()]#去除换行符和逗号分隔符
+        # datetime=list(filter(None,datetime))#去除none和空格
+        # #print(datetime)
+        # d5 = [i[30:90].strip('\n').strip(',') for i in df.readlines()]
+        # print(d5)
+        datetime=line[0:20].strip(',').strip()
+        etfId=line[20:27].strip(',').strip()
+        closeprice=line[44:51].strip(',').strip()
+        volume=line[51:58].strip(',').strip()
+        # totalcap=line[58:68].strip(',')
+        # buyprice1=line[68:75].strip(',')
+        # buyvolume1=line[75:82].strip(',')
+        iopv=line[-7:].strip('\n')
+        dict_data.get('datetime').append(datetime)
+        dict_data.get('ETF_id').append(etfId)
+        dict_data.get('closeprice').append(closeprice)
+        dict_data.get('volume').append(volume)
+        # dict_data.get('totalcap').append(totalcap)
+        # dict_data.get('buyprice1').append(buyprice1)
+        # dict_data.get('buyvolume1').append(buyvolume1)
+        dict_data.get('iopv').append(iopv)
+
+dict_data=pd.DataFrame(dict_data)
+print(dict_data)
+dict_data.to_csv('D:/Extracted/512390.csv')
+print('SUCCESS')
+
+
+#建立一个DataFrame，列名即为键名，也就是nam，age……
