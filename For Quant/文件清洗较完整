@@ -1,0 +1,104 @@
+import pandas as pd
+import numpy as np
+import os
+'''
+tmp=[]
+with open('testtxt.txt','r') as df:
+    for line in df:
+        print(line)
+        tmp.append(line.strip('\n').split(','))
+print(tmp)
+tmp=np.mat(tmp)
+print(tmp)
+store={'m':[],'m3':[],'g1':[],'h3':[],'c5':[]}
+# for i in range(tmp.shape[0]):
+#         j=0
+#         store.get('m').append(tmp[i,j])
+#         j=j+1
+#         store.get('m3').append(tmp[i, j])
+#         j=j+1
+#         store.get('g1').append(tmp[i, j])
+#         j=j+1
+#         store.get('h3').append(tmp[i, j])
+#         j=j+1
+#         store.get('c5').append(tmp[i, j])
+#
+#
+# store=pd.DataFrame(store)
+# print(store)
+store=pd.DataFrame()
+for i in range(tmp.shape[1]):
+    a=np.array(tmp[:,i])
+    #print(a)
+    t=pd.DataFrame([j for j in a])
+
+    store=pd.concat([store,t],axis=1)
+col=['买一','卖一','买二','卖二','买三']
+store.columns=col
+print(store['买三'])
+#以上为小文件测试内容
+'''
+raw_data_path='D:\Todo'
+save_path='D:\cleaningdata'
+#还需要根据日期建立parent_path, save_path+parent_path=>文件最终储存的位置
+#运行一次在save_path下创建文件夹完毕后注销
+# tails=os.listdir(raw_data_path)
+# #os.path.splitext()分离文件名与扩展名[0]获得文件名[1]获得扩展名
+# name=[os.path.splitext(i)[0] for i in tails]
+# #print(name)
+# #根据被压缩的文件名创建文件夹
+# for i in name:
+#     isExists=os.path.exists(save_path+'/'+i)
+#     if not isExists:
+#         os.makedirs(save_path + '/' + i)
+#         #print(save_path + '\\' + t + ':' + 'success')
+
+store_name=[]
+
+full_path=raw_data_path+'\\'+'sh20190301.bs'
+f=open(full_path,'rb')
+#得到所有的etf代码
+l=0
+for line in f:
+    line=str(line,encoding='gbk')
+    line=line.strip('\n')
+    tmp=line[20:26]
+    #print(tmp)
+    if tmp.isdigit() and len(tmp)!=0:
+        if 500000<int(tmp)<600000:
+            #tmp=line[20:26]+'.txt'
+            store_name.append(tmp)
+    l=l+1
+    if l>1050000:
+       break
+print(store_name)
+#print(len(set(store_name)))2#40
+store_name=set(store_name)
+tails=os.listdir(raw_data_path)
+#print('tails',tails)
+#tmp=os.path.splitext(tails[0])
+save_full_path=[]
+for root,dirs,files in os.walk(save_path):
+    save_full_path.append(root)
+save_full_path=save_full_path[1:]
+count=0
+for i in tails:
+    open_full_path=raw_data_path+'//'+i
+    f=open(open_full_path,'rb')
+    for line in f:
+        line = str(line, encoding='gbk')
+
+        for j in store_name:
+        #if tmp.isdigit() and len(tmp) != 0:#第一行是抬头
+            #if 500000 < int(tmp) < 600000:
+            if j==line[20:26]:
+                n = line[20:26] + '.txt'
+                ntn=save_full_path[count]+'\\'+n
+                file=open(ntn,'a')
+                file.write(line)
+    count=count+1
+    if count>len(tails):
+        break
+
+print('finish')
+
