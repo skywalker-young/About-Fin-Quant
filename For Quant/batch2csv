@@ -1,0 +1,51 @@
+import os
+import pandas as pd
+import numpy as np
+col=['时间','代码','市场','最新价','最高价','最低价','总量','总金额',\
+     '挂买价1','挂买量1','挂买价2','挂买量2','挂买价3','挂买量3',\
+ '挂买价4','挂买量4','挂买价5','挂买量5','挂买价6','挂买量6','挂买价7','挂买量7','挂买价8','挂买量8','挂买价9','挂买量9',\
+ '挂买价10','挂买量10','挂卖价1','挂卖量1','挂卖价2','挂卖量2','挂卖价3','挂卖量3','挂卖价4','挂卖量4','挂卖价5','挂卖量5',\
+ '挂卖价6','挂卖量6','挂卖价7','挂卖量7','挂卖价8','挂卖量8','挂卖价9','挂卖量9','挂卖价10','挂卖量10','总成交笔数','IOPV']
+
+bathtocsv="D:\cleaningdata"
+r=[]
+for root,dirs,files in os.walk(bathtocsv):
+    r.append(root)
+r=r[1:]
+out=os.listdir(r[0])
+
+# print(r[0]+'\\'+out[0])
+# with open(r[0]+'\\'+out[0], 'r') as df:
+#     for line in df:
+#         print(line)
+# exit()
+for i in r:
+    out=os.listdir(i)
+    for j in out:
+        final_step_path=i+'\\'+(j)
+        # print(final_step_path)
+        # exit()
+        storetxt=[]
+        storecsv = pd.DataFrame()
+        with open(final_step_path, 'r') as df:
+            for line in df:
+                storetxt.append(line.strip('\n').split(','))
+        storetxt = np.mat(storetxt)
+        # print(storetxt.shape)
+        # exit()
+        for cc in range(0, storetxt.shape[1]):
+                    a = np.array(storetxt[:, cc])
+                    # print('a[0][0][0:50]',a[0][0][0:50])
+                    # print(len(a[0][0]))
+                    # exit()
+                    if len(a[0][0]) != 1:
+                        t = pd.DataFrame(a[0][0][:])
+                        # print('t.T',t.T)
+                        # exit()
+                        t = t.T
+                        storecsv = pd.concat([storecsv, t], axis=0)
+
+        storecsv.columns = col
+        # print(storecsv.head())
+        # exit()
+        storecsv.to_csv(i+'\\'+os.path.splitext(j)[0]+'.csv', encoding='gbk', index=False)
