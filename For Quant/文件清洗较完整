@@ -101,4 +101,58 @@ for i in tails:
         break
 
 print('finish')
+##########################################
+##################
+######将txt转成csv
+#############
+col=['时间','代码','市场','最新价','最高价','最低价','总量','总金额',\
+     '挂买价1','挂买量1','挂买价2','挂买量2','挂买价3','挂买量3',\
+ '挂买价4','挂买量4','挂买价5','挂买量5','挂买价6','挂买量6','挂买价7','挂买量7','挂买价8','挂买量8','挂买价9','挂买量9',\
+ '挂买价10','挂买量10','挂卖价1','挂卖量1','挂卖价2','挂卖量2','挂卖价3','挂卖量3','挂卖价4','挂卖量4','挂卖价5','挂卖量5',\
+ '挂卖价6','挂卖量6','挂卖价7','挂卖量7','挂卖价8','挂卖量8','挂卖价9','挂卖量9','挂卖价10','挂卖量10','总成交笔数','IOPV']
+
+target_path='D://Extracted//501001.txt'
+pd.set_option('display.max_columns', None)
+tmp=[]
+with open(target_path,'r') as df:
+    for line in df:
+        #print(line)
+        tmp.append(line.strip('\n').split(','))
+
+tmp=np.mat(tmp)
+
+store=pd.DataFrame()
+for i in range(0,tmp.shape[1]):
+    a=np.array(tmp[:,i])
+    # print('a[0][0][0:5]',a[0][0][1:5])
+    # print(len(a[0][0]))
+    # exit()
+    if len(a[0][0])!=1:
+      t=pd.DataFrame(a[0][0][:])
+      # print(t.T)
+      # exit()
+      t=t.T
+      store=pd.concat([store,t],axis=0)
+      #print(store)
+print(store.head())
+store.columns=col
+(store.to_csv('test.csv',encoding='gbk',index=False))
+print('SUCCESS')
+# tmp=[]
+# with open('testtxt.txt','r') as df:
+#     for line in df:
+#         print(line)
+#         tmp.append(line.strip('\n').split(','))
+#
+# tmp=np.mat(tmp)
+# print(tmp)
+# store=pd.DataFrame()
+# for i in range(tmp.shape[1]):
+#     a=np.array(tmp[:,i])
+#     #print(a)
+#     t=pd.DataFrame([j for j in a])
+#
+#     store=pd.concat([store,t],axis=1)
+# col=['买一','卖一','买二','卖二','买三']
+# store.columns=col
 
